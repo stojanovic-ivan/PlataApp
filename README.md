@@ -24,6 +24,8 @@ Sledite ova uputstva kako biste pokrenuli ovaj projekat na svom računaru.
 
    ```bash
    dotnet restore
+   dotnet ef migrations add InitialCreate
+   dotnet ef database update
    dotnet run
    ```
 
