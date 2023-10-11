@@ -400,3 +400,6 @@ FodyWeavers.xsd
 # Migrations files
 Data/Migrations/
 Migrations/
+
+# VS Code
+.vscode/*

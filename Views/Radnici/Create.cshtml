@@ -1,0 +1,49 @@
+@model Radnik
+
+@{
+    ViewData["Title"] = "Kreiraj novog radnika";
+}
+
+<div class="text-center">
+    <h1 class="mb-5">@ViewData["Title"]</h1>
+
+    <form asp-action="Create" class="col-12 col-md-6 mx-auto">
+        <div class="row mb-2">
+            <div class="form-group col-12 col-md-6">
+                <label asp-for="Ime" class="control-label float-start fw-bold">Ime</label>
+                <input asp-for="Ime" class="form-control" />
+                <span asp-validation-for="Ime" class="text-danger"></span>
+            </div>
+
+            <div class="form-group col-12 col-md-6">
+                <label asp-for="Prezime" class="control-label float-start fw-bold">Prezime</label>
+                <input asp-for="Prezime" class="form-control" />
+                <span asp-validation-for="Prezime" class="text-danger"></span>
+            </div>
+        </div>
+        <div class="form-group col-12 mb-2">
+            <label asp-for="Adresa" class="control-label float-start fw-bold">Adresa</label>
+            <input asp-for="Adresa" class="form-control" />
+            <span asp-validation-for="Adresa" class="text-danger"></span>
+        </div>
+        <div class="form-group col-12 mb-2">
+            <label asp-for="RadnaPozicija" class="control-label float-start fw-bold">Radna Pozicija</label>
+            <input asp-for="RadnaPozicija" class="form-control" />
+            <span asp-validation-for="RadnaPozicija" class="text-danger"></span>
+        </div>
+        <div class="form-group col-6 mb-5">
+            <label asp-for="NetoPlata" class="control-label float-start fw-bold">Neto Plata (RSD)</label>
+            <input asp-for="NetoPlata" class="form-control text-end" />
+            <span asp-validation-for="NetoPlata" class="text-danger"></span>
+        </div>
+
+        <div class="row">
+            <div class="form-group col-6">
+                <a asp-action="Index" class="btn btn-primary w-100">< Nazad</a>
+            </div>
+            <div class="form-group col-6 float-end">
+                <input type="submit" value="Sačuvaj" class="btn btn-success w-100" />
+            </div>
+        </div>
+    </form>
+</div>

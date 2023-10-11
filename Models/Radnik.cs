@@ -1,22 +1,32 @@
-using System;
-using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
-public class Radnik
-{
+public class Radnik {
+
+    public Radnik() {
+        Ime = "";
+        Prezime = "";
+        Adresa = "";
+        NetoPlata = 0;
+        RadnaPozicija = "";
+    }
+
     public int Id { get; set; }
     
-    [Required]
     public string Ime { get; set; }
 
-    [Required]
     public string Prezime { get; set; }
 
-    [Required]
     public string Adresa { get; set; }
 
-    [Required]
     public decimal NetoPlata { get; set; }
     
-    [Required]
     public string RadnaPozicija { get; set; }
+
+    [NotMapped]
+    public decimal BrutoPlataRSD { get; set; }
+    [NotMapped]
+    public decimal BrutoPlataEUR { get; set; }
+    [NotMapped]
+    public decimal BrutoPlataUSD { get; set; }
+
 }
