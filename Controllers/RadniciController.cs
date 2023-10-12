@@ -9,17 +9,11 @@ using System.Net;
 namespace PlataApp.Controllers;
 
 public class RadniciController : Controller
-{
-    private readonly ILogger<RadniciController> _logger;
-    private readonly ApplicationDbContext _context;
-
-    private readonly IHttpClientFactory _clientFactory;
-
-    public RadniciController(ILogger<RadniciController> logger, ApplicationDbContext context, IHttpClientFactory clientFactory)
-    {
-        _logger = logger;
+{   private readonly ApplicationDbContext _context;
+    private readonly ExchangeRateHelper _exchangeRateHelper;
+    public RadniciController(ApplicationDbContext context, ExchangeRateHelper exchangeRateHelper) {
         _context = context;
-        _clientFactory = clientFactory;
+        _exchangeRateHelper = exchangeRateHelper;
     }
 
     // Akcija za spisak radnika
@@ -49,32 +43,12 @@ public class RadniciController : Controller
         // izracunaj bruto platu u RSD
         radnik.BrutoPlataRSD = Math.Round(radnik.NetoPlata * (decimal)1.7, 2);
 
-        // Poziv API-ja za konverziju
-        var apiUri = "https://api.fastforex.io/fetch-multi?from=RSD&to=EUR,USD&api_key=demo";
-        var httpClient = _clientFactory.CreateClient();
+        // sacekaj dok se pokupe exchange rates iz APIja
+        (decimal rateEUR, decimal rateUSD) = await _exchangeRateHelper.GetExchangeRatesAsync();
 
-        try {
-            var response = await httpClient.GetAsync(new Uri(apiUri));
-            if (response.IsSuccessStatusCode) {
-                var content = await response.Content.ReadAsStringAsync();
-
-                // Obrada JSON odgovora
-                var konverzija = JsonConvert.DeserializeObject<Konverzija>(content);
-
-                // ako postoje podaci od api-ja, preracunaj bruto u EUR i USD
-                if (konverzija != null && konverzija.Results.ContainsKey("EUR") && konverzija.Results.ContainsKey("USD")) {
-                    // Postavite vrednosti konverzije u Radnik objekat
-                    radnik.BrutoPlataEUR = Math.Round(radnik.BrutoPlataRSD * konverzija.Results["EUR"], 2);
-                    radnik.BrutoPlataUSD = Math.Round(radnik.BrutoPlataRSD * konverzija.Results["USD"], 2);
-                } else {
-                    radnik.BrutoPlataEUR = 0;
-                    radnik.BrutoPlataUSD = 0;
-                }
-            }
-        } catch {
-            radnik.BrutoPlataEUR = 0;
-            radnik.BrutoPlataUSD = 0;
-        }
+        // Postavite vrednosti konverzije u Radnik objekat
+        radnik.BrutoPlataEUR = Math.Round(radnik.BrutoPlataRSD * rateEUR, 2);
+        radnik.BrutoPlataUSD = Math.Round(radnik.BrutoPlataRSD * rateUSD, 2);
 
         // Vrati podatke o radniku u JSON formatu
         return Json(radnik); 

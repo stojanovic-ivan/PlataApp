@@ -16,6 +16,9 @@ builder.Services.AddControllersWithViews();
 // Dodaj HttpClientFactory
 builder.Services.AddHttpClient();
 
+// dodaj exchangeRates helper
+builder.Services.AddScoped<ExchangeRateHelper>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

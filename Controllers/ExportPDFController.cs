@@ -3,14 +3,13 @@ using Microsoft.EntityFrameworkCore;
 using PlataApp.Data;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
-using Newtonsoft.Json;
 
 namespace PlataApp.Controllers;
 
 public class ExportPDFController : Controller {
 
     private readonly ApplicationDbContext _context;
-    private readonly IHttpClientFactory _clientFactory;
+    private readonly ExchangeRateHelper _exchangeRateHelper;
 
     static int _brojKolona = 9;
     Document _doc;
@@ -18,24 +17,20 @@ public class ExportPDFController : Controller {
     PdfPTable _pdfTable = new PdfPTable(_brojKolona);
     PdfPCell _pdfPCell;
     MemoryStream _memoryStream = new MemoryStream();
-
-    decimal _rateEUR = 0;
-    decimal _rateUSD = 0;
     
-    public ExportPDFController(ApplicationDbContext context, IHttpClientFactory clientFactory)
-    {
+    public ExportPDFController(ApplicationDbContext context, ExchangeRateHelper exchangeRateHelper) {
         _context = context;
-        _clientFactory = clientFactory;
+        _exchangeRateHelper = exchangeRateHelper;
     }
 
     public async Task<ActionResult> Export() {
 
         var radnici = await _context.Radnici.ToListAsync();
-        byte[] abytes = PreparePDF(radnici);
+        byte[] abytes = await PreparePDF(radnici);
         return File(abytes, "application/PDF");
     }
 
-    public byte[] PreparePDF(List<Radnik> radnici) {
+    public async Task<byte[]> PreparePDF(List<Radnik> radnici) {
 
         _doc = new Document(PageSize.A4.Rotate(), 0f, 0f, 0f, 0f);
         _doc.SetPageSize(PageSize.A4.Rotate());
@@ -47,8 +42,8 @@ public class ExportPDFController : Controller {
         _doc.Open();
         _pdfTable.SetWidths(new float[] {15f, 50f, 50f, 80f, 80f, 25f, 25f, 25f, 25f});
 
-        this.ReportHeader();
-        this.ReportBody(radnici);
+        ReportHeader();
+        await ReportBody(radnici);
         _pdfTable.HeaderRows = 2;
         _doc.Add(_pdfTable);
         _doc.Close();
@@ -65,11 +60,10 @@ public class ExportPDFController : Controller {
         _pdfTable.CompleteRow();
     }
 
-    private void ReportBody(List<Radnik> radnici) {
+    private async Task ReportBody(List<Radnik> radnici) {
 
         // sacekaj dok se pokupe exchange rates iz APIja
-        var getRates = GetExchangeRatesAsync();
-        getRates.Wait();
+        (decimal rateEUR, decimal rateUSD) = await _exchangeRateHelper.GetExchangeRatesAsync();
 
         AddCell("ID", BaseColor.DARK_GRAY, 8f, Element.ALIGN_CENTER, true, 1, 0, true);
         AddCell("Ime", BaseColor.DARK_GRAY, 8f, Element.ALIGN_CENTER, true, 1, 0, true);
@@ -97,8 +91,8 @@ public class ExportPDFController : Controller {
             // izracunaj bruto platu u RSD, EUR i USD
             decimal netoPlata = Math.Round(radnik.NetoPlata, 2);
             decimal brutoPlataRSD = Math.Round(netoPlata * (decimal)1.7, 2);
-            decimal brutoPlataEUR = Math.Round(brutoPlataRSD * _rateEUR, 2);
-            decimal brutoPlataUSD = Math.Round(brutoPlataRSD * _rateUSD, 2);
+            decimal brutoPlataEUR = Math.Round(brutoPlataRSD * rateEUR, 2);
+            decimal brutoPlataUSD = Math.Round(brutoPlataRSD * rateUSD, 2);
 
             AddCell(netoPlata.ToString(), cellColor, 8f, Element.ALIGN_RIGHT);
             AddCell(brutoPlataRSD.ToString(), cellColor, 8f, Element.ALIGN_RIGHT);
@@ -124,25 +118,6 @@ public class ExportPDFController : Controller {
         }
         _pdfPCell.ExtraParagraphSpace = 0;
         _pdfTable.AddCell(_pdfPCell);
-    }
-
-    private async Task GetExchangeRatesAsync() {
-        // Pokrenite asinhroni poziv API-ja i sačekajte odgovor
-        var apiUri = "https://api.fastforex.io/fetch-multi?from=RSD&to=EUR,USD&api_key=demo";
-        var httpClient = _clientFactory.CreateClient();
-
-        HttpResponseMessage apiResponse = await httpClient.GetAsync(new Uri(apiUri));
-
-        if (apiResponse.IsSuccessStatusCode) {
-            var content = await apiResponse.Content.ReadAsStringAsync();
-            var konverzija = JsonConvert.DeserializeObject<Konverzija>(content);
-
-            if (konverzija != null && konverzija.Results.ContainsKey("EUR") && konverzija.Results.ContainsKey("USD")) {
-                // Ako je API odgovor uspešan, možete postaviti vrednosti konverzije u polja klase
-                _rateEUR = konverzija.Results["EUR"];
-                _rateUSD = konverzija.Results["USD"];
-            }
-        }
     }
 
 }
