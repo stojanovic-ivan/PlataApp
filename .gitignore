@@ -396,3 +396,10 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Migrations files
+Data/Migrations/
+Migrations/
+
+# VS Code
+.vscode/*
