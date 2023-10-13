@@ -9,10 +9,12 @@ public class ExportXLSXController : Controller {
 
     private readonly ApplicationDbContext _context;
     private readonly ExchangeRateHelper _exchangeRateHelper;
-    
-    public ExportXLSXController(ApplicationDbContext context, ExchangeRateHelper exchangeRateHelper) {
+    private readonly BrutoHelper _brutoHelper;
+
+    public ExportXLSXController(ApplicationDbContext context, ExchangeRateHelper exchangeRateHelper, BrutoHelper brutoHelper) {
         _context = context;
         _exchangeRateHelper = exchangeRateHelper;
+        _brutoHelper = brutoHelper;
     }
 
     [HttpGet]
@@ -62,7 +64,7 @@ public class ExportXLSXController : Controller {
 
             // izracunaj bruto platu u RSD, EUR i USD
             decimal netoPlata = Math.Round(radnik.NetoPlata, 2);
-            decimal brutoPlataRSD = Math.Round(netoPlata * (decimal)1.7, 2);
+            decimal brutoPlataRSD = _brutoHelper.GetBruto(radnik.NetoPlata);
             decimal brutoPlataEUR = Math.Round(brutoPlataRSD * rateEUR, 2);
             decimal brutoPlataUSD = Math.Round(brutoPlataRSD * rateUSD, 2);
 

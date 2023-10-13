@@ -18,6 +18,8 @@ builder.Services.AddHttpClient();
 
 // dodaj exchangeRates helper
 builder.Services.AddScoped<ExchangeRateHelper>();
+// dodaj bruto helper
+builder.Services.AddScoped<BrutoHelper>();
 
 var app = builder.Build();
 
