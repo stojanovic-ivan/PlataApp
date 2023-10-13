@@ -10,6 +10,7 @@ public class ExportPDFController : Controller {
 
     private readonly ApplicationDbContext _context;
     private readonly ExchangeRateHelper _exchangeRateHelper;
+    private readonly BrutoHelper _brutoHelper;
 
     static int _brojKolona = 9;
     Document _doc;
@@ -18,9 +19,11 @@ public class ExportPDFController : Controller {
     PdfPCell _pdfPCell;
     MemoryStream _memoryStream = new MemoryStream();
     
-    public ExportPDFController(ApplicationDbContext context, ExchangeRateHelper exchangeRateHelper) {
+
+    public ExportPDFController(ApplicationDbContext context, ExchangeRateHelper exchangeRateHelper, BrutoHelper brutoHelper) {
         _context = context;
         _exchangeRateHelper = exchangeRateHelper;
+        _brutoHelper = brutoHelper;
     }
 
     public async Task<ActionResult> Export() {
@@ -90,7 +93,7 @@ public class ExportPDFController : Controller {
 
             // izracunaj bruto platu u RSD, EUR i USD
             decimal netoPlata = Math.Round(radnik.NetoPlata, 2);
-            decimal brutoPlataRSD = Math.Round(netoPlata * (decimal)1.7, 2);
+            decimal brutoPlataRSD = _brutoHelper.GetBruto(netoPlata);
             decimal brutoPlataEUR = Math.Round(brutoPlataRSD * rateEUR, 2);
             decimal brutoPlataUSD = Math.Round(brutoPlataRSD * rateUSD, 2);
 

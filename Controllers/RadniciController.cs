@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using PlataApp.Models;
 using PlataApp.Data;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 using System.Net;
 
 namespace PlataApp.Controllers;
@@ -11,9 +10,11 @@ namespace PlataApp.Controllers;
 public class RadniciController : Controller
 {   private readonly ApplicationDbContext _context;
     private readonly ExchangeRateHelper _exchangeRateHelper;
-    public RadniciController(ApplicationDbContext context, ExchangeRateHelper exchangeRateHelper) {
+    private readonly BrutoHelper _brutoHelper;
+    public RadniciController(ApplicationDbContext context, ExchangeRateHelper exchangeRateHelper, BrutoHelper brutoHelper) {
         _context = context;
         _exchangeRateHelper = exchangeRateHelper;
+        _brutoHelper = brutoHelper;
     }
 
     // Akcija za spisak radnika
@@ -41,7 +42,7 @@ public class RadniciController : Controller
         }
 
         // izracunaj bruto platu u RSD
-        radnik.BrutoPlataRSD = Math.Round(radnik.NetoPlata * (decimal)1.7, 2);
+        radnik.BrutoPlataRSD = _brutoHelper.GetBruto(radnik.NetoPlata);
 
         // sacekaj dok se pokupe exchange rates iz APIja
         (decimal rateEUR, decimal rateUSD) = await _exchangeRateHelper.GetExchangeRatesAsync();
